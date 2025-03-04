@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gesture-Based Verification</title>
+<style>
+    body { display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f8f9fc; color: #212529; font-family: Arial, sans-serif; }
+    .container { text-align: center; background-color: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 0 20px rgba(0, 0, 0, 0.1); }
+    canvas { background-color: #f0f0f0; border: 2px solid #dee2e6; border-radius: 10px; margin-top: 20px; }
+    button { margin-top: 10px; padding: 5px 10px; background-color: #007bff; border: none; border-radius: 5px; color: #fff; cursor: pointer; }
+    button.refresh { background-color: #6c757d; }
+    #status { margin-top: 10px; }
+    .logo-bar { width: 100%; background-color: #000; padding: 5px; margin-bottom: 10px; }
+    .logo-bar img { display: block; margin: 0 auto; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <div class="logo-bar">
+        <img src="https://a.storyblok.com/f/244962/110x21/1c4392992c/logo.svg" alt="FEELD Logo">
+    </div>
+    <h2>Draw a Shape to Verify</h2>
+    <p>Shape: <span id="currentShape">Heart</span></p>
+    <canvas id="drawCanvas" width="300" height="200"></canvas><br>
+    <button onclick="verify()">Verify</button>
+    <button class="refresh" onclick="refreshShape()">Refresh Shape</button>
+    <p id="status">Draw the shape to continue</p>
+</div>
+
+<script>
+    const shapes = ['Heart', 'Star', 'Square', 'Circle'];
+    let currentShape = shapes[0];
+    const canvas = document.getElementById('drawCanvas');
+    const ctx = canvas.getContext('2d');
+    const status = document.getElementById('status');
+    const shapeDisplay = document.getElementById('currentShape');
+    let drawing = false;
+    let path = [];
+
+    canvas.addEventListener('mousedown', () => { drawing = true; path = []; });
+    canvas.addEventListener('mouseup', () => drawing = false);
+    canvas.addEventListener('mousemove', draw);
+
+    function draw(event) {
+        if (!drawing) return;
+        ctx.fillStyle = '#333';
+        ctx.beginPath();
+        ctx.arc(event.offsetX, event.offsetY, 2, 0, Math.PI * 2);
+        ctx.fill();
+        path.push({ x: event.offsetX, y: event.offsetY });
+    }
+
+    function verify() {
+        if (isShapeCorrect()) {
+            status.textContent = "Correct Shape!";
+            status.style.color = "green";
+        } else {
+            status.textContent = "Incorrect Shape, Try Again";
+            status.style.color = "red";
+        }
+    }
+
+    function isShapeCorrect() {
+        if (path.length < 20) return false;
+        const { minX, minY, maxX, maxY } = path.reduce((acc, point) => ({
+            minX: Math.min(acc.minX, point.x), minY: Math.min(acc.minY, point.y),
+            maxX: Math.max(acc.maxX, point.x), maxY: Math.max(acc.maxY, point.y)
+        }), { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity });
+        const aspectRatio = (maxX - minX) / (maxY - minY);
+        if (currentShape === 'Circle' && Math.abs(aspectRatio - 1) < 0.2) return true;
+        if (currentShape === 'Square' && Math.abs(aspectRatio - 1) < 0.2) return true;
+        return false;
+    }
+
+    function refreshShape() {
+        const newShape = shapes[Math.floor(Math.random() * shapes.length)];
+        currentShape = newShape;
+        shapeDisplay.textContent = newShape;
+        status.textContent = "Draw the shape to continue";
+        status.style.color = "#212529";
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+</script>
+
+</body>
+</html>

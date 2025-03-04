@@ -7,7 +7,7 @@
 <style>
     body { display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f8f9fc; color: #212529; font-family: Arial, sans-serif; }
     .container { text-align: center; background-color: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 0 20px rgba(0, 0, 0, 0.1); }
-    canvas { background-color: #f0f0f0; border: 2px solid #dee2e6; border-radius: 10px; margin-top: 20px; }
+    canvas { background-color: #f0f0f0; border: 2px solid #dee2e6; border-radius: 10px; margin-top: 20px; touch-action: none; }
     button { margin-top: 10px; padding: 5px 10px; background-color: #007bff; border: none; border-radius: 5px; color: #fff; cursor: pointer; }
     button.refresh { background-color: #6c757d; }
     #status { margin-top: 10px; }
@@ -39,21 +39,29 @@
     let drawing = false;
     let path = [];
 
-    // Fixing mobile support
+    // Fixing mobile support with passive: false
     canvas.addEventListener('mousedown', startDrawing);
     canvas.addEventListener('mouseup', stopDrawing);
     canvas.addEventListener('mousemove', draw);
-    canvas.addEventListener('touchstart', startDrawing);
-    canvas.addEventListener('touchend', stopDrawing);
-    canvas.addEventListener('touchmove', draw);
+    canvas.addEventListener('touchstart', startDrawing, { passive: false });
+    canvas.addEventListener('touchend', stopDrawing, { passive: false });
+    canvas.addEventListener('touchmove', draw, { passive: false });
 
     function getEventPosition(event) {
         const rect = canvas.getBoundingClientRect();
-        const touch = event.touches ? event.touches[0] : event;
-        return {
-            x: touch.clientX - rect.left,
-            y: touch.clientY - rect.top
-        };
+        if (event.touches) {
+            // Use pageX and pageY for better mobile support
+            const touch = event.touches[0];
+            return {
+                x: (touch.pageX - rect.left),
+                y: (touch.pageY - rect.top)
+            };
+        } else {
+            return {
+                x: (event.clientX - rect.left),
+                y: (event.clientY - rect.top)
+            };
+        }
     }
 
     function startDrawing(event) {
@@ -61,7 +69,7 @@
         path = [];
         const pos = getEventPosition(event);
         drawPoint(pos.x, pos.y);
-        event.preventDefault();
+        event.preventDefault();  // Prevent scrolling on mobile
     }
 
     function stopDrawing() {
@@ -73,7 +81,7 @@
         const pos = getEventPosition(event);
         drawPoint(pos.x, pos.y);
         path.push(pos);
-        event.preventDefault();
+        event.preventDefault();  // Prevent scrolling on mobile
     }
 
     function drawPoint(x, y) {

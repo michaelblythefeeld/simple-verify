@@ -39,17 +39,48 @@
     let drawing = false;
     let path = [];
 
-    canvas.addEventListener('mousedown', () => { drawing = true; path = []; });
-    canvas.addEventListener('mouseup', () => drawing = false);
+    // Fixing mobile support
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mouseup', stopDrawing);
     canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('touchstart', startDrawing);
+    canvas.addEventListener('touchend', stopDrawing);
+    canvas.addEventListener('touchmove', draw);
+
+    function getEventPosition(event) {
+        const rect = canvas.getBoundingClientRect();
+        const touch = event.touches ? event.touches[0] : event;
+        return {
+            x: touch.clientX - rect.left,
+            y: touch.clientY - rect.top
+        };
+    }
+
+    function startDrawing(event) {
+        drawing = true;
+        path = [];
+        const pos = getEventPosition(event);
+        drawPoint(pos.x, pos.y);
+        event.preventDefault();
+    }
+
+    function stopDrawing() {
+        drawing = false;
+    }
 
     function draw(event) {
         if (!drawing) return;
+        const pos = getEventPosition(event);
+        drawPoint(pos.x, pos.y);
+        path.push(pos);
+        event.preventDefault();
+    }
+
+    function drawPoint(x, y) {
         ctx.fillStyle = '#333';
         ctx.beginPath();
-        ctx.arc(event.offsetX, event.offsetY, 2, 0, Math.PI * 2);
+        ctx.arc(x, y, 2, 0, Math.PI * 2);
         ctx.fill();
-        path.push({ x: event.offsetX, y: event.offsetY });
     }
 
     function verify() {
